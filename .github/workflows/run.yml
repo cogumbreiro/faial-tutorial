@@ -1,0 +1,14 @@
+on: [push]
+
+jobs:
+  check_drf:
+    runs-on: ubuntu-latest
+    name: Check that saxpy.cu is DRF.
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v1
+    - name: Setup faial
+      uses: cogumbreiro/setup-faial@v1.0
+    - name: Check saxpy
+      run: |
+        faial-drf saxpy.cu

@@ -9,6 +9,9 @@ jobs:
       uses: actions/checkout@v1
     - name: Setup faial
       uses: cogumbreiro/setup-faial@v1.0
-    - name: Check saxpy
+    - name: Check saxpy.cu
       run: |
         faial-drf saxpy.cu
+    - name: Check saxpy-buggy.cu
+      run: |
+        ! faial-drf saxpy-buggy.cu

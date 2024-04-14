@@ -1,53 +1,28 @@
-# Tutorial on using Faial, a static analyzer for CUDA kernels
+# Using Faial a static analyzer for CUDA kernels
 
-[Faial](https://gitlab.com/umb-svl/faial/) is a static analyzer for CUDA kernels that can help you detect
-data-race free kernels and racy kernels without needing inputs. For installation details, please go to [Faial's web page](https://gitlab.com/umb-svl/faial/).
+[Faial](https://gitlab.com/umb-svl/faial/) is a static code analyzer for CUDA
+kernels that can help you detect data-race free kernels and racy kernels
+**without running the program and for all possible inputs**.
+* [Installing Faial (external link)](https://gitlab.com/umb-svl/faial/)
+* [Setting up a GitHub Actions project](github-actions/README.md)
+* [Using command line options](command-line-options/README.md)
+* [Adding assumptions](adding-assumptions/README.md)
 
-# Checking a CUDA kernel
+# Detecting data-races
 
 
-The following example is a classic [SAXPY CUDA kernel](https://developer.nvidia.com/blog/easy-introduction-cuda-c-and-c/).
+The file `saxpy-buggy.cu` is a **buggy** [SAXPY CUDA kernel](https://developer.nvidia.com/blog/easy-introduction-cuda-c-and-c/).
 
 ```c
-$ cat saxpy.cu
-__global__
-void saxpy(int n, float a, float *x, float *y)
+__global__ void saxpy(int n, float a, float *x, float *y)
 {
   int i = blockIdx.x*blockDim.x + threadIdx.x;
-  if (i < n) y[i] = a*x[i] + y[i];
+  if (i < n) y[i] = a*x[i] + y[i + 1];
 }
 ```
 
-We can check that `saxpy.cu` is data-race free (DRF) by running `faial-drf`:
-
-<img src="images/saxpy.png">
-
-
-# Checking a racy CUDA kernel
-
-Let us now check a buggy protocol `saxpy-buggy.cu`. The difference between
-`saxpy.cu` and `saxpy-buggy.cu` is simply changing the last read from `y[i]`
-into `y[i + 1]`.
-
-
-```
-$ diff -u saxpy.cu saxpy-buggy.cu 
---- saxpy.cu	2021-04-19 16:28:24.407379028 -0400
-+++ saxpy-buggy.cu	2021-04-20 10:41:26.317324409 -0400
-@@ -2,5 +2,5 @@
- void saxpy(int n, float a, float *x, float *y)
- {
-   int i = blockIdx.x*blockDim.x + threadIdx.x;
--  if (i < n) y[i] = a*x[i] + y[i];
-+  if (i < n) y[i] = a*x[i] + y[i + 1];
- }
-\ No newline at end of file
-```
-
-
-`faial-drf` can now inform us of the data-race.
-
-<img src="images/saxpy-buggy.png">
+Running `faial-drf saxpy-buggy.cu` shows us the root cause and a program state
+that triggers the data-race. <img src="images/saxpy-buggy.png">
 
 The error report consists of:
  * the source location (line 5) of the error, along with both access being highlighted (here underline)
@@ -56,31 +31,27 @@ The error report consists of:
    column per thread causing the data-race. In this case one thread
    `threadIdx.x=0` races with tread `threadIdx.x=1`.
 
+# Detecting error-free kernels
 
-# Try it yourself, using GitHub Actions
+The fixed version of our example is in `saxpy.cu`. Here is how these two
+files differ:
 
-Faial is available in the GitHub Action Marketplace as
-[`cogumbreiro/setup-faial`](https://github.com/marketplace/actions/setup-faial).
-
-<img src="images/gh.png">
-
-To make `faial-drf` available in the `PATH`, simply add a step that uses
-`cogumbreiro/setup-faial@v1.0`. Here's an example of how we setup Faial in
-this repository to automatically check that `saxpy.cu` is data-race free.
-
-```yaml
-on: [push]
-
-jobs:
-  check_drf:
-    runs-on: ubuntu-latest
-    name: Check that saxpy.cu is DRF.
-    steps:
-    - name: Check out code
-      uses: actions/checkout@v1
-    - name: Setup faial
-      uses: cogumbreiro/setup-faial@v1.0
-    - name: Check saxpy
-      run: |
-        faial-drf saxpy.cu
 ```
+$ diff -u saxpy-buggy.cu saxpy.cu
+--- saxpy-buggy.cu	2021-04-20 10:41:26.317324409 -0400
++++ saxpy.cu	2021-04-19 16:28:24.407379028 -0400
+@@ -2,5 +2,5 @@
+ void saxpy(int n, float a, float *x, float *y)
+ {
+   int i = blockIdx.x*blockDim.x + threadIdx.x;
+-  if (i < n) y[i] = a*x[i] + y[i + 1];
++  if (i < n) y[i] = a*x[i] + y[i];
+ }
+\ No newline at end of file
+```
+
+Running `faial-drf saxpy.cu` informs us that there are no data races in **all
+possible executions**.
+
+<img src="images/saxpy.png" width="400px">
+

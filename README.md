@@ -20,10 +20,7 @@ void saxpy(int n, float a, float *x, float *y)
 
 We can check that `saxpy.cu` is data-race free (DRF) by running `faial-drf`:
 
-```
-$ faial-drf saxpy.cu
-Kernel 'saxpy' is DRF!
-```
+<img src="images/saxpy.png">
 
 
 # Checking a racy CUDA kernel
@@ -50,31 +47,7 @@ $ diff -u saxpy.cu saxpy-buggy.cu
 
 `faial-drf` can now inform us of the data-race.
 
-```
-$  faial-drf saxpy-buggy.cu
-Kernel 'saxpy' has 1 data-race.
-
-~~~~ Data-race 1 (CIDI) ~~~~
-
-5 |   if (i < n) y[i] = a*x[i] + y[i + 1];
-
-Globals
-┌────────┬─────────────────────┐
-│y[]     │1                    │
-├────────┼─────────────────────┤
-│blockIdx│x = 0 | y = 0 | z = 0│
-├────────┼─────────────────────┤
-│n       │2                    │
-└────────┴─────────────────────┘
-
-Locals
-┌─────────┬─────────────────────┬─────────────────────┐
-│threadIdx│x = 1 | y = 0 | z = 0│x = 0 | y = 0 | z = 0│
-└─────────┴─────────────────────┴─────────────────────┘
-True alarm detected!
-
-(proof #0)
-```
+<img src="images/saxpy-buggy.png">
 
 The error report consists of:
  * the source location (line 5) of the error, along with both access being highlighted (here underline)
@@ -88,6 +61,8 @@ The error report consists of:
 
 Faial is available in the GitHub Action Marketplace as
 [`cogumbreiro/setup-faial`](https://github.com/marketplace/actions/setup-faial).
+
+<img src="images/gh.png">
 
 To make `faial-drf` available in the `PATH`, simply add a step that uses
 `cogumbreiro/setup-faial@v1.0`. Here's an example of how we setup Faial in

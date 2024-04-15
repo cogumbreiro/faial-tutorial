@@ -36,7 +36,7 @@ The error report consists of:
 The fixed version of our example is in `saxpy.cu`. Here is how these two
 files differ:
 
-```
+```diff
 $ diff -u saxpy-buggy.cu saxpy.cu
 --- saxpy-buggy.cu	2021-04-20 10:41:26.317324409 -0400
 +++ saxpy.cu	2021-04-19 16:28:24.407379028 -0400

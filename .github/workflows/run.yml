@@ -15,3 +15,9 @@ jobs:
     - name: Check saxpy-buggy.cu
       run: |
         ! faial-drf saxpy-buggy.cu
+    - name: Grid level analysis (2048 blocks)
+      run: |
+        ! faial-drf --grid-dim 2048 --grid-level racy-grid-level.cu
+    - name: Block level analysis (2048 blocks)
+      run: |
+        faial-drf --grid-dim 2048 racy-grid-level.cu

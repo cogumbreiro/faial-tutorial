@@ -14,19 +14,25 @@ jobs:
         faial-drf saxpy.cu
     - name: Check saxpy-buggy.cu
       run: |
-        faial-drf saxpy-buggy.cu;
-        [ $? -eq 1 ]
+        set +e
+        faial-drf saxpy-buggy.cu
+        [ $? -eq 1 ] # ensure the output is 1
+
     - name: Grid level analysis (2048 blocks)
       run: |
+        set +e
         faial-drf --grid-dim 2048 --grid-level command-line-options/racy-grid-level.cu
-        [ $? -eq 1 ]
+        [ $? -eq 1 ] # ensure the output is 1
+
     - name: Block level analysis (2048 blocks)
       run: |
         faial-drf --grid-dim 2048 command-line-options/racy-grid-level.cu
     - name: Adding assumptions (example 1)
       run: |
+        set +e
         faial-drf adding-assumptions/read-index.cu
-        [ $? -eq 1 ]
+        [ $? -eq 1 ] # ensure the output is 1
+
     - name: Adding assumptions (example 2)
       run: |
         faial-drf adding-assumptions/read-index-fixed.cu
